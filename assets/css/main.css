@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --ink: #1c1b18;
+  --ink-muted: #6f6a5c;
+  --paper: #f4f2ec;
+  --paper-raised: #fbfaf7;
+  --rule: #d9d5c9;
+  --ribbon: #b3391f;
+  --blue: #2f5fa8;
+  --green: #3f7d51;
+  --amber: #c9861e;
+}
+
+body {
+  font-family: 'Space Mono', 'Courier New', monospace;
+  background-color: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .card {
+    background-color: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    transition: border-color 0.25s ease;
+  }
+  .card:hover {
+    border-color: var(--ink);
+  }
+
+  .btn {
+    @apply px-4 py-2 text-sm rounded-[2px] border transition-colors duration-200;
+    border-color: var(--rule);
+    color: var(--ink);
+    background-color: var(--paper-raised);
+  }
+  .btn:hover:not(:disabled) {
+    border-color: var(--ink);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .label-caps {
+    @apply text-[11px] uppercase tracking-[0.18em];
+    color: var(--ink-muted);
+  }
+}
+
+/* Entrée en cascade, discrète */
+.stagger-in {
+  opacity: 0;
+  animation: rise-in 0.45s ease-out forwards;
+  animation-delay: calc(var(--stagger, 0) * 70ms);
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Curseur de machine à écrire */
+.cursor-blink::after {
+  content: '_';
+  margin-left: 2px;
+  animation: blink 1.1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
