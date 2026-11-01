@@ -8,7 +8,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "typecheck": "nuxi typecheck",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "setup:appwrite": "node --env-file=.env scripts/setup-appwrite.mjs"
   },
   "dependencies": {
     "chart.js": "^4.4.9",

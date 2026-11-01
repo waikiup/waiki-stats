@@ -1,6 +1,7 @@
 import { Client, Query, TablesDB } from 'node-appwrite'
 import type { Models } from 'node-appwrite'
 import type { Session } from '../../domain/entities/Session'
+import { normalizeUid } from '../../domain/entities/TagGroup'
 import type { SessionRepository } from '../../domain/repositories/SessionRepository'
 
 export interface AppwriteConfig {
@@ -18,6 +19,8 @@ type SessionRow = Models.Row & {
   endTime: number
   durationSeconds: number
   dateStart: string
+  /** Colonne ajoutée pour la v2 : absente des sessions envoyées par les anciennes versions de l'app */
+  tagUid?: string | null
 }
 
 const PAGE_SIZE = 500
@@ -76,7 +79,8 @@ export class AppwriteSessionRepository implements SessionRepository {
       endTime: toEpochMs(row.endTime),
       durationSeconds: row.durationSeconds,
       dateStart: new Date(row.dateStart),
-      createdAt: row.$createdAt ? new Date(row.$createdAt) : null
+      createdAt: row.$createdAt ? new Date(row.$createdAt) : null,
+      tagUid: row.tagUid ? normalizeUid(row.tagUid) || null : null
     }
   }
 }

@@ -7,15 +7,18 @@ Dashboard de statistiques des sessions de blocage d'apps (scan NFC), construit a
 ```
 server/
 ├── domain/            # Cœur métier, aucune dépendance technique
-│   ├── entities/          Session
-│   ├── repositories/      SessionRepository (port)
+│   ├── entities/          Session, TagGroup, Client
+│   ├── repositories/      ports Session / TagGroup / Client
 │   └── valueObjects/      DashboardStats (contrat des stats)
 ├── application/       # Use cases
-│   └── usecases/          GetDashboardStats (tous les calculs de stats)
+│   └── usecases/          GetDashboardStats (calculs), ResolveStatsScope (droits)
 ├── infrastructure/    # Adaptateurs techniques
-│   └── appwrite/          AppwriteSessionRepository (implémente le port)
+│   ├── appwrite/          implémentations Appwrite des ports
+│   └── demo/              données fictives (mode démo)
 ├── api/               # Interface HTTP (Nitro)
-│   ├── stats.get.ts       GET /api/stats (protégé)
+│   ├── stats.get.ts       GET /api/stats?scope=&days= (admin ou client)
+│   ├── me.get.ts          qui est connecté + périmètres possibles
+│   ├── admin/             clients et groupes de puces (admin seul)
 │   └── auth/verify.post.ts
 └── utils/
     ├── container.ts       Composition root (câblage des dépendances)
@@ -34,6 +37,29 @@ pages/                 # index (dashboard), login
 
 La clé API Appwrite ne quitte **jamais** le serveur : le front appelle `/api/stats`, qui interroge Appwrite côté Nitro.
 
+## v2 : admin + espaces clients B2B
+
+- **Admin** (clé `NUXT_DASHBOARD_API_KEY`) : toutes les stats, filtre par périmètre (tout, hors groupes, un client, un groupe) et par période (7 j, 30 j, 90 j, 1 an, tout). Page `/admin` : créer des clients, leur donner un code, créer des groupes de puces (un par un ou en collant une liste « nom puis UID »).
+- **Client B2B** (code `WK-XXXX-XXXX-XXXX` donné par l'admin, même écran de connexion) : uniquement les stats des groupes qui lui sont rattachés, jamais une personne en particulier. Sous 5 personnes différentes sur la période, rien ne s'affiche.
+- Une puce appartient à un seul groupe ; un groupe à un seul client (ou aucun).
+- Le code client n'est montré qu'une fois ; Appwrite n'en garde que l'empreinte SHA-256. Perdu → « nouveau code ».
+
+### Ce que l'app doit envoyer
+
+Chaque session porte une colonne `tagUid` : l'UID de la puce scannée **au démarrage** de la session, en hexadécimal, par exemple `046C6D32502390` (les `:` sont tolérés, la casse aussi). Sans elle, la session compte dans « Hors groupes ». Détail pour les devs iOS/Android : `DEV-TAGUID.md`.
+
+### Mise en place sur Appwrite (une fois)
+
+```bash
+npm run setup:appwrite
+```
+
+Crée les tables `tag_groups` et `clients`, la colonne `sessions.tagUid` et ses index. Sans risque de le relancer. La clé API doit avoir les droits `tables.write`, `columns.write`, `indexes.write`, et en fonctionnement `rows.read` + `rows.write` (l'admin écrit dans `tag_groups` et `clients`).
+
+### Mode démo
+
+Sans `NUXT_APPWRITE_PROJECT_ID`, l'app tourne sur des données fictives en mémoire : clé admin `DEMO-ADMIN`, codes clients `DEMO-NANTES` et `DEMO-RENNES`.
+
 ## Démarrage
 
 ```bash
@@ -46,7 +72,7 @@ Ouvrir http://localhost:3000 — la clé d'accès demandée est `NUXT_DASHBOARD_
 
 ## Authentification
 
-L'accès est protégé par une clé partagée (header `x-dashboard-key`, vérification timing-safe). Tout passe par `server/utils/dashboardAuth.ts` et `composables/useDashboardAuth.ts` : pour brancher plus tard une vraie authentification (sessions Appwrite, OAuth…), seuls ces deux fichiers et le middleware sont à remplacer.
+L'accès passe par une seule clé (header `x-dashboard-key`) : la clé admin (vérification timing-safe) ou le code d'un client (comparé par empreinte). Tout passe par `server/utils/dashboardAuth.ts` et `composables/useDashboardAuth.ts` : pour brancher plus tard une vraie authentification (sessions Appwrite, OAuth…), seuls ces deux fichiers et le middleware sont à remplacer.
 
 ## Index Appwrite recommandés
 
@@ -72,7 +98,9 @@ Nitro détecte Vercel automatiquement, aucune configuration de build n'est néce
    - `NUXT_APPWRITE_API_KEY` *(sensible — ne jamais la préfixer `NUXT_PUBLIC_`)*
    - `NUXT_APPWRITE_DATABASE_ID` = `main`
    - `NUXT_APPWRITE_SESSIONS_TABLE_ID` = `sessions`
-   - `NUXT_DASHBOARD_API_KEY` = la clé d'accès au dashboard
+   - `NUXT_APPWRITE_TAG_GROUPS_TABLE_ID` = `tag_groups`
+   - `NUXT_APPWRITE_CLIENTS_TABLE_ID` = `clients`
+   - `NUXT_DASHBOARD_API_KEY` = la clé d'accès admin
 4. **Deploy**.
 
 Ou en CLI : `npx vercel`, puis `npx vercel env add` pour chaque variable, et `npx vercel --prod`.

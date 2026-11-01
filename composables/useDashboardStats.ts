@@ -1,9 +1,20 @@
-import type { DashboardStats } from '~/server/domain/valueObjects/DashboardStats'
+import type { ScopedDashboardStats } from '~/server/domain/valueObjects/DashboardStats'
+
+export interface MeResponse {
+  role: 'admin' | 'client'
+  name: string
+  demo: boolean
+  scopes: Array<{ id: string, label: string }>
+}
 
 export function useDashboardStats() {
-  const { apiKey, logout } = useDashboardAuth()
+  const { apiKey, authFetch } = useDashboardAuth()
 
-  const stats = useState<DashboardStats | null>('dashboard-stats', () => null)
+  const stats = useState<ScopedDashboardStats | null>('dashboard-stats', () => null)
+  const me = useState<MeResponse | null>('dashboard-me', () => null)
+  const scope = useState<string>('dashboard-scope', () => 'all')
+  /** '7' | '30' | '90' | '365' | 'all' */
+  const days = useState<string>('dashboard-days', () => '30')
   const pending = ref(false)
   const error = ref<string | null>(null)
 
@@ -12,20 +23,21 @@ export function useDashboardStats() {
     pending.value = true
     error.value = null
     try {
-      stats.value = await $fetch<DashboardStats>('/api/stats', {
-        headers: { 'x-dashboard-key': apiKey.value }
-      })
+      const [meRes, statsRes] = await Promise.all([
+        authFetch<MeResponse>('/api/me'),
+        authFetch<ScopedDashboardStats>('/api/stats', { query: { scope: scope.value, days: days.value } })
+      ])
+      me.value = meRes
+      stats.value = statsRes
     } catch (e: unknown) {
-      const status = (e as { statusCode?: number })?.statusCode
-      if (status === 401) {
-        await logout()
-        return
-      }
+      if ((e as { statusCode?: number })?.statusCode === 401) return
       error.value = 'Impossible de charger les statistiques.'
     } finally {
       pending.value = false
     }
   }
 
-  return { stats, pending, error, refresh }
+  watch([scope, days], refresh)
+
+  return { stats, me, scope, days, pending, error, refresh }
 }

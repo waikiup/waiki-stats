@@ -58,7 +58,7 @@ const options = computed(() => ({
   <div class="card p-6">
     <h3 class="font-bold">Sessions par jour</h3>
     <p class="text-xs mb-4" style="color: var(--ink-muted)">
-      Nombre de sessions sur les 30 derniers jours
+      Nombre de sessions par jour sur la période (90 jours au plus)
     </p>
     <div class="h-72">
       <Line :data="chartData" :options="options" />

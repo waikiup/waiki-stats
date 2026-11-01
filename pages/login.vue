@@ -31,7 +31,7 @@ async function submit() {
       <div class="mb-8">
         <h1 class="text-xl font-bold tracking-tight cursor-blink">WAIKI_STATS</h1>
         <p class="text-xs mt-3" style="color: var(--ink-muted)">
-          Entrez votre clé d'accès pour consulter le dashboard.
+          Entrez votre code d&apos;accès pour consulter vos statistiques.
         </p>
       </div>
 
@@ -39,7 +39,7 @@ async function submit() {
         <input
           v-model="key"
           type="password"
-          placeholder="clé d'accès"
+          placeholder="code d&apos;accès"
           autocomplete="current-password"
           class="w-full rounded-[2px] border border-[#d9d5c9] bg-transparent px-4 py-3 text-sm outline-none transition-colors duration-200 placeholder:opacity-50 focus:border-[#1c1b18]"
         >
@@ -48,7 +48,7 @@ async function submit() {
           style="color: var(--ribbon)"
           :class="error ? 'opacity-100' : 'opacity-0'"
         >
-          Clé invalide, réessayez.
+          Code invalide, réessayez.
         </p>
         <button
           type="submit"

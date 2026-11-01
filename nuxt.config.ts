@@ -6,7 +6,8 @@ export default defineNuxtConfig({
   // (les routes /api restent servies par Nitro)
   routeRules: {
     '/': { ssr: false },
-    '/login': { ssr: false }
+    '/login': { ssr: false },
+    '/admin': { ssr: false }
   },
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
@@ -16,6 +17,8 @@ export default defineNuxtConfig({
     appwriteApiKey: '',
     appwriteDatabaseId: 'main',
     appwriteSessionsTableId: 'sessions',
+    appwriteTagGroupsTableId: 'tag_groups',
+    appwriteClientsTableId: 'clients',
     dashboardApiKey: '',
     public: {
       appName: 'Waiki Stats'

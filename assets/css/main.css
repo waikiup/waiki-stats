@@ -81,3 +81,24 @@ body {
 @keyframes blink {
   50% { opacity: 0; }
 }
+
+@layer components {
+  .chip {
+    @apply px-2.5 py-1 text-xs rounded-[2px] border transition-colors duration-150;
+    border-color: var(--rule);
+    background-color: var(--paper-raised);
+    color: var(--ink);
+  }
+  .chip:hover { border-color: var(--ink); }
+  .chip-on,
+  .chip-on:hover {
+    background-color: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+  .field {
+    @apply w-full rounded-[2px] border bg-transparent px-3 py-2 text-sm outline-none transition-colors duration-200;
+    border-color: var(--rule);
+  }
+  .field:focus { border-color: var(--ink); }
+}

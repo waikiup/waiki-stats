@@ -13,4 +13,6 @@ export interface Session {
   durationSeconds: number
   dateStart: Date
   createdAt: Date | null
+  /** UID de la puce qui a lancé la session, normalisé (cf. normalizeUid). Null pour les sessions antérieures à l'envoi de l'UID par l'app. */
+  tagUid: string | null
 }
