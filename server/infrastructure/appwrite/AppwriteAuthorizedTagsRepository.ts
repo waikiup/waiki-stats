@@ -46,12 +46,11 @@ export class AuthorizedTagsGroupRepository implements TagGroupRepository {
       cursor = page.rows[page.rows.length - 1]!.$id
     }
 
-    // Même nom, même groupe (les variantes de « prévente » sont rassemblées par nomDeGroupe)
+    // Même nom, même groupe (« Prévente », « Autres », puis BU Nantes et BU Rennes qui viennent du fichier de groupes fixes)
     const fixes = GROUPES_FIXES.map(g => ({ ...g, uids: g.uids.map(normalizeUid) }))
     const fixedUids = new Set(fixes.flatMap(g => g.uids))
     const byName = new Map<string, TagGroup>()
-    const add = (rawName: string, uid: string) => {
-      const name = nomDeGroupe(rawName)
+    const add = (name: string, uid: string) => {
       const key = name.toLowerCase().replace(/\s+/g, ' ')
       const group = byName.get(key) ?? { id: key, name, uids: [], clientId: null }
       if (!group.uids.includes(uid)) group.uids.push(uid)
@@ -60,7 +59,7 @@ export class AuthorizedTagsGroupRepository implements TagGroupRepository {
     for (const row of rows) {
       const uid = normalizeUid(row.uid ?? '')
       if (!row.name?.trim() || !uid || fixedUids.has(uid)) continue
-      add(row.name, uid)
+      add(nomDeGroupe(row.name), uid)
     }
     for (const g of fixes) for (const uid of g.uids) add(g.name, uid)
     return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name, 'fr', { numeric: true }))
