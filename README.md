@@ -39,7 +39,7 @@ La clé API Appwrite ne quitte **jamais** le serveur : le front appelle `/api/st
 
 ## v2 : admin + espaces clients B2B
 
-- **Admin** (clé `NUXT_DASHBOARD_API_KEY`) : toutes les stats, filtre par périmètre (tout, hors groupes, un client, un groupe) et par période (7 j, 30 j, 90 j, 1 an, tout). Page `/admin` : créer des clients, leur donner un code, créer des groupes de puces (un par un ou en collant une liste « nom puis UID »).
+- **Admin** (clé `NUXT_DASHBOARD_API_KEY`) : toutes les stats, filtre par périmètre (tout, hors groupes, un client, un groupe) et par période (7 j, 30 j, 90 j, 1 an, tout). Page `/admin` : en mode démo, créer des clients, des groupes et des codes ; avec Appwrite, simple liste des groupes lus dans `authorized_tags`.
 - **Client B2B** (code `WK-XXXX-XXXX-XXXX` donné par l'admin, même écran de connexion) : uniquement les stats des groupes qui lui sont rattachés, jamais une personne en particulier. Sous 5 personnes différentes sur la période, rien ne s'affiche.
 - Une puce appartient à un seul groupe ; un groupe à un seul client (ou aucun).
 - Le code client n'est montré qu'une fois ; Appwrite n'en garde que l'empreinte SHA-256. Perdu → « nouveau code ».
@@ -48,13 +48,9 @@ La clé API Appwrite ne quitte **jamais** le serveur : le front appelle `/api/st
 
 Chaque session porte une colonne `tagUid` : l'UID de la puce scannée **au démarrage** de la session, en hexadécimal, par exemple `046C6D32502390` (les `:` sont tolérés, la casse aussi). Sans elle, la session compte dans « Hors groupes ». Détail pour les devs iOS/Android : `DEV-TAGUID.md`.
 
-### Mise en place sur Appwrite (une fois)
+### Appwrite : lecture seule, rien à créer
 
-```bash
-npm run setup:appwrite
-```
-
-Crée les tables `tag_groups` et `clients`, la colonne `sessions.tagUid` et ses index. Sans risque de le relancer. La clé API doit avoir les droits `tables.write`, `columns.write`, `indexes.write`, et en fonctionnement `rows.read` + `rows.write` (l'admin écrit dans `tag_groups` et `clients`).
+Avec Appwrite, l'app ne fait que lire. Les groupes viennent de la table existante `authorized_tags` : toutes les puces qui portent le même `name` forment un groupe (« BU Nantes 2 », etc.). Les sessions sont rattachées par leur colonne `tagUid`, déjà présente. La clé API n'a besoin que de `rows.read`. Les clients B2B et leurs codes n'existent qu'en mode démo, faute de table pour les stocker.
 
 ### Mode démo
 
@@ -98,8 +94,7 @@ Nitro détecte Vercel automatiquement, aucune configuration de build n'est néce
    - `NUXT_APPWRITE_API_KEY` *(sensible — ne jamais la préfixer `NUXT_PUBLIC_`)*
    - `NUXT_APPWRITE_DATABASE_ID` = `main`
    - `NUXT_APPWRITE_SESSIONS_TABLE_ID` = `sessions`
-   - `NUXT_APPWRITE_TAG_GROUPS_TABLE_ID` = `tag_groups`
-   - `NUXT_APPWRITE_CLIENTS_TABLE_ID` = `clients`
+   - `NUXT_APPWRITE_AUTHORIZED_TAGS_TABLE_ID` = `authorized_tags` (valeur par défaut, facultatif)
    - `NUXT_DASHBOARD_API_KEY` = la clé d'accès admin
 4. **Deploy**.
 

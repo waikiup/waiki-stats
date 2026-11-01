@@ -17,8 +17,7 @@ export default defineNuxtConfig({
     appwriteApiKey: '',
     appwriteDatabaseId: 'main',
     appwriteSessionsTableId: 'sessions',
-    appwriteTagGroupsTableId: 'tag_groups',
-    appwriteClientsTableId: 'clients',
+    appwriteAuthorizedTagsTableId: 'authorized_tags',
     dashboardApiKey: '',
     public: {
       appName: 'Waiki Stats'

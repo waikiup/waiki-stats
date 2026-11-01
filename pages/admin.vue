@@ -7,11 +7,14 @@ const { authFetch, logout } = useDashboardAuth()
 
 const clients = ref<ClientItem[]>([])
 const groups = ref<TagGroup[]>([])
+/** Avec Appwrite, l'app ne fait que lire : les groupes viennent de authorized_tags */
+const readOnly = ref(false)
 const message = ref<{ kind: 'ok' | 'error', text: string } | null>(null)
 /** Code affiché une seule fois après création ou renouvellement */
 const revealedCode = ref<{ client: string, code: string } | null>(null)
 
 async function load() {
+  readOnly.value = (await authFetch<{ readOnly?: boolean }>('/api/me')).readOnly === true
   const [c, g] = await Promise.all([
     authFetch<ClientItem[]>('/api/admin/clients'),
     authFetch<TagGroup[]>('/api/admin/groups')
@@ -135,7 +138,7 @@ function importGroups() {
   <main class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
     <header class="flex flex-wrap items-end justify-between gap-4 mb-8 pb-6 border-b" style="border-color: var(--rule)">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight cursor-blink">CLIENTS_&_GROUPES</h1>
+        <h1 class="text-2xl font-bold tracking-tight cursor-blink">{{ readOnly ? 'GROUPES' : 'CLIENTS_&_GROUPES' }}</h1>
         <p class="text-xs mt-2" style="color: var(--ink-muted)">Qui voit quoi : un client voit les stats des groupes de puces qui lui sont rattachés, rien d'autre.</p>
       </div>
       <div class="flex gap-2">
@@ -161,9 +164,9 @@ function importGroups() {
       </p>
     </div>
 
-    <div class="grid gap-8 lg:grid-cols-[1fr_1.4fr]">
+    <div class="grid gap-8" :class="readOnly ? '' : 'lg:grid-cols-[1fr_1.4fr]'">
       <!-- Clients -->
-      <section>
+      <section v-if="!readOnly">
         <h2 class="font-bold mb-4">Clients <span class="label-caps ml-1">{{ clients.length }}</span></h2>
         <form class="flex gap-2 mb-4" @submit.prevent="createClient">
           <input v-model="newClient" class="field" placeholder="Nom du client (ex. BU Nantes)">
@@ -189,11 +192,14 @@ function importGroups() {
       <!-- Groupes -->
       <section>
         <h2 class="font-bold mb-4">Groupes de puces <span class="label-caps ml-1">{{ groups.length }}</span></h2>
+        <p v-if="readOnly" class="text-xs mb-4" style="color: var(--ink-muted)">
+          Les groupes sont lus dans la table authorized_tags : toutes les puces qui portent le même nom forment un groupe. Pour en changer, modifie le nom de la puce dans Appwrite.
+        </p>
         <ul class="space-y-2 mb-8">
           <li v-for="g in groups" :key="g.id" class="card p-4">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <p class="font-bold">{{ g.name }} <span class="text-xs font-normal" style="color: var(--ink-muted)">· {{ g.uids.length }} puces</span></p>
-              <select class="field !w-auto !py-1 text-xs" :value="g.clientId ?? ''" @change="setGroupClient(g, ($event.target as HTMLSelectElement).value)">
+              <select v-if="!readOnly" class="field !w-auto !py-1 text-xs" :value="g.clientId ?? ''" @change="setGroupClient(g, ($event.target as HTMLSelectElement).value)">
                 <option value="">— aucun client —</option>
                 <option v-for="c in clients" :key="c.id" :value="c.id">{{ c.name }}</option>
               </select>
@@ -206,7 +212,7 @@ function importGroups() {
               </div>
             </div>
             <p v-else class="text-[11px] mt-2 leading-relaxed" style="color: var(--ink-muted)">{{ g.uids.map(formatUid).join(' · ') }}</p>
-            <div class="flex flex-wrap gap-3 mt-3 text-xs">
+            <div v-if="!readOnly" class="flex flex-wrap gap-3 mt-3 text-xs">
               <button v-if="editing !== g.id" class="underline" @click="startEdit(g)">modifier les puces</button>
               <button class="underline" @click="renameGroup(g)">renommer</button>
               <button class="underline" style="color: var(--ribbon)" @click="deleteGroup(g)">supprimer</button>
@@ -215,7 +221,7 @@ function importGroups() {
           <li v-if="!groups.length" class="text-xs" style="color: var(--ink-muted)">Aucun groupe pour l'instant.</li>
         </ul>
 
-        <div class="grid gap-4 md:grid-cols-2">
+        <div v-if="!readOnly" class="grid gap-4 md:grid-cols-2">
           <!-- Un groupe -->
           <form class="card p-5 space-y-3" @submit.prevent="createGroup">
             <p class="font-bold">Nouveau groupe</p>

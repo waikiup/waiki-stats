@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
     role: 'admin' as const,
     name: 'Admin',
     demo: isDemoMode(),
+    readOnly: !isDemoMode(),
     scopes: [
       { id: 'all', label: 'Tout' },
       { id: 'public', label: 'Hors groupes' },

@@ -11,7 +11,7 @@ Table `sessions`, nouvelle colonne **`tagUid`** (string, 32 caractères max, fac
 - Pas de puce (démarrage sans scan, mode dev) : ne pas envoyer le champ, ou `null`.
 - Les anciennes sessions restent sans `tagUid` : elles comptent dans « Hors groupes ».
 
-La colonne est créée par `npm run setup:appwrite` dans ce dépôt ; tant qu'elle n'existe pas, Appwrite refuse un champ inconnu, donc **lancer le script avant de publier l'app**.
+La colonne existe déjà dans `sessions`. Le dashboard rattache chaque `tagUid` au groupe de la puce du même UID dans `authorized_tags` (même `name` = même groupe).
 
 ## iOS (repère dans `Waiki-ios`)
 
